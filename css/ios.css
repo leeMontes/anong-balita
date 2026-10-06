@@ -18,44 +18,116 @@ body {
 
 .hidden { display: none !important; }
 
-/* ----------------------------------------------------------- device frame */
+/* ------------------------------------------------- walkie-talkie frame */
 .device {
   position: relative;
-  width: 360px;
-  height: min(740px, calc(100vh - 48px));
-  margin: 24px auto;
-  padding: 60px 13px 84px;
-  border-radius: 44px;
+  width: 344px;
+  height: min(768px, calc(100vh - 40px));
+  margin: 22px auto;
+  padding: 76px 15px 98px;
+  border-radius: 30px 30px 36px 36px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: linear-gradient(#3a3a3d 0%, #111 12%, #050505 100%);
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0) 16%, rgba(0, 0, 0, 0.2) 84%, rgba(0, 0, 0, 0.4)),
+    linear-gradient(#565b63 0%, #33373d 10%, #23262a 52%, #16181b 100%);
   box-shadow:
-    inset 0 0 0 3px #0a0a0a,
-    inset 0 0 0 5px #3e3e42,
-    0 30px 60px rgba(0, 0, 0, 0.6);
+    inset 0 0 0 2px #0c0d0f,
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    inset 0 -16px 26px rgba(0, 0, 0, 0.55),
+    0 28px 55px rgba(0, 0, 0, 0.6);
 }
-.device::before { /* earpiece slit */
+.device::before { /* top sheen across the plastic */
   content: "";
   position: absolute;
-  top: 30px; left: 50%;
-  transform: translateX(-50%);
-  width: 74px; height: 8px;
-  border-radius: 4px;
-  background: #000;
-  box-shadow: inset 0 1px 0 #3a3a3d;
+  top: 0; left: 0; right: 0;
+  height: 46%;
+  background: linear-gradient(rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0));
+  pointer-events: none;
 }
-.device::after { /* home button */
+.device::after { /* rubber side rails */
   content: "";
   position: absolute;
-  bottom: 20px; left: 50%;
-  transform: translateX(-50%);
-  width: 54px; height: 54px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 50% 32%, #262629, #050505);
-  box-shadow: inset 0 0 0 2px #3a3a3d, inset 0 2px 4px rgba(0, 0, 0, 0.8);
+  top: 10px; bottom: 10px; left: 0; right: 0;
+  border-left: 7px solid #101114;
+  border-right: 7px solid #101114;
+  border-radius: 24px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06), inset 0 0 14px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
 }
 .home-indicator { display: none; }
+
+/* antenna, speaker grille, channel knob + TX/RX LED */
+.wt-top { position: absolute; top: 0; left: 0; right: 0; height: 76px; pointer-events: none; }
+.wt-antenna {
+  position: absolute; top: 12px; right: 26px;
+  width: 14px; height: 56px;
+  border-radius: 7px;
+  background: linear-gradient(90deg, #0a0b0d, #3d424a 42%, #0f1113);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 3px 5px rgba(0, 0, 0, 0.5);
+}
+.wt-antenna::before {
+  content: "";
+  position: absolute; top: -9px; left: 50%;
+  transform: translateX(-50%);
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 34%, #565b63, #0a0b0d);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+.wt-grille {
+  position: absolute; top: 22px; left: 24px;
+  width: 118px; height: 36px;
+  border-radius: 6px;
+  background: repeating-linear-gradient(#0a0b0d 0 3px, #2f333a 3px 6px);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.85), 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+.wt-knob {
+  position: absolute; top: 15px; left: 156px;
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 30%, #d3d6db, #8a8e95 55%, #4a4e55);
+  box-shadow: inset 0 1px 1px #fff, 0 3px 6px rgba(0, 0, 0, 0.6);
+}
+.wt-knob::after {
+  content: "";
+  position: absolute; top: 6px; left: 50%;
+  transform: translateX(-50%);
+  width: 4px; height: 15px;
+  border-radius: 2px;
+  background: #33363b;
+}
+.wt-led {
+  position: absolute; top: 32px; left: 226px;
+  width: 11px; height: 11px;
+  border-radius: 50%;
+  background: #3a2a0a;
+  box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.9);
+  transition: background 0.12s, box-shadow 0.12s;
+}
+.wt-led.on { background: #ffb000; box-shadow: 0 0 10px #ffb000; }
+
+/* bottom microphone holes + brand plate */
+.wt-bottom { position: absolute; left: 0; right: 0; bottom: 0; height: 98px; pointer-events: none; }
+.wt-speaker {
+  position: absolute; bottom: 30px; left: 50%;
+  transform: translateX(-50%);
+  display: flex; gap: 9px;
+}
+.wt-speaker i {
+  width: 13px; height: 13px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #565b63, #0a0b0d);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.18);
+}
+.wt-brand {
+  position: absolute; bottom: 9px; left: 50%;
+  transform: translateX(-50%);
+  font: 700 9px "Helvetica Neue", Helvetica, Arial, sans-serif;
+  letter-spacing: 3px;
+  color: #6b6f76;
+}
 
 /* ------------------------------------------------------------- status bar */
 .statusbar {
@@ -165,6 +237,27 @@ body {
   background: linear-gradient(#8aa4cc, #4e6d9e 50%, #3d5a86);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
 }
+
+.saved-chip {
+  display: block;
+  width: 100%;
+  margin: 0 0 14px;
+  padding: 9px 12px;
+  border: 1px solid #2a68bb;
+  border-radius: 9px;
+  font: 700 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
+  letter-spacing: 0.5px;
+  color: #fff;
+  text-align: center;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.3);
+  background: linear-gradient(#8aa4cc, #4e6d9e 50%, #3c5680);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 1px 2px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.saved-chip:active { background: linear-gradient(#3c5680, #5e7aa8); }
 
 /* ------------------------------------------------------- grouped tables */
 .group {
@@ -616,6 +709,7 @@ body {
     background: #000;
   }
   .device::before, .device::after { display: none; }
+  .wt-top, .wt-bottom { display: none; }
   .statusbar { padding-top: env(safe-area-inset-top); height: calc(20px + env(safe-area-inset-top)); }
   .tabbar { padding-bottom: env(safe-area-inset-bottom); height: calc(50px + env(safe-area-inset-bottom)); }
 }

@@ -16,6 +16,13 @@
 <body>
 <div class="device">
 
+  <div class="wt-top" aria-hidden="true">
+    <div class="wt-grille"></div>
+    <div class="wt-knob"></div>
+    <div class="wt-led" id="wt-led"></div>
+    <div class="wt-antenna"></div>
+  </div>
+
   <div class="statusbar">
     <span class="sb-left"><span class="signal"><i></i><i></i><i></i><i></i></span><span class="sb-carrier">BALITA</span></span>
     <span class="sb-clock" id="status-clock">--:--</span>
@@ -35,6 +42,8 @@
           <button type="button" data-mode="host" class="active">CREATE</button>
           <button type="button" data-mode="join">JOIN</button>
         </div>
+
+        <button type="button" id="saved-chip" class="saved-chip hidden"></button>
 
         <div id="form-host" class="form">
           <div class="group">
@@ -127,6 +136,11 @@
     <button type="button" class="tab" data-tab="chat"><span class="tab-ico">&#128172;</span>Chat</button>
     <a class="tab" href="info.html"><span class="tab-ico">&#8505;</span>Info</a>
   </nav>
+
+  <div class="wt-bottom" aria-hidden="true">
+    <div class="wt-speaker"><i></i><i></i><i></i><i></i><i></i></div>
+    <div class="wt-brand">ANONG BALITA</div>
+  </div>
 
   <div class="home-indicator"></div>
 </div>

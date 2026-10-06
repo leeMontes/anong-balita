@@ -2,7 +2,7 @@
 // Pages are network-first (so the latest HTML always wins); static assets are
 // cache-first. Redirects and non-2xx responses are never cached. WebRTC audio
 // is never touched here.
-const CACHE = "anongbalita-v4";
+const CACHE = "anongbalita-v5";
 const CORE = [
   "./css/ios.css",
   "./js/audio.js",

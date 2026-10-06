@@ -43,6 +43,18 @@
     try { localStorage.removeItem(SESSION_KEY); } catch (e) {}
   }
 
+  function showSavedChip(handle) {
+    var chip = $("saved-chip");
+    if (!chip) return;
+    if (handle) {
+      chip.textContent = "\u21BB REUSE CHANNEL  " + handle;
+      chip.setAttribute("data-handle", handle);
+      chip.classList.remove("hidden");
+    } else {
+      chip.classList.add("hidden");
+    }
+  }
+
   // ---------------------------------------------------------------- helpers
   function show(el, on) {
     if (!el) return;
@@ -292,12 +304,18 @@
   }
 
   // ------------------------------------------------------------------- PTT
+  function setWtLed(on) {
+    var led = $("wt-led");
+    if (led) led.classList.toggle("on", !!on);
+  }
+
   function pttDown(e) {
     if (!state.inChannel || state.transmitting) return;
     if (e) e.preventDefault();
     state.transmitting = true;
     $("ptt").classList.add("active");
     $("led-tx").classList.add("on");
+    setWtLed(true);
     window.RadioAudio.squelchOpen();
     if (state.net) state.net.setTransmitting(true);
   }
@@ -307,6 +325,7 @@
     state.transmitting = false;
     $("ptt").classList.remove("active");
     $("led-tx").classList.remove("on");
+    setWtLed(false);
     if (state.net) state.net.setTransmitting(false);
     window.RadioAudio.rogerBeep();
   }
@@ -424,6 +443,13 @@
     $("btn-random").addEventListener("click", function () {
       $("input-handle").value = window.RadioNet.makeHandle(8);
     });
+    $("saved-chip").addEventListener("click", function () {
+      var h = this.getAttribute("data-handle") || "";
+      if (!h) return;
+      $("input-handle").value = h;
+      $("input-join-handle").value = h;
+      setStatus("CHANNEL READY \u2014 TAP BROADCAST OR TUNE IN.", "ok");
+    });
     $("btn-create").addEventListener("click", function () { doHost(); });
     $("btn-join").addEventListener("click", function () { doJoin(); });
     $("btn-leave").addEventListener("click", function () {
@@ -453,6 +479,7 @@
 
     // Restore last channel; a scanned QR (#join=) wins over the saved one.
     var saved = loadSession();
+    showSavedChip(saved && saved.handle ? saved.handle : "");
     var joinMatch = /join=([^&]+)/.exec(location.hash || "");
     if (joinMatch) {
       setMode("join");
