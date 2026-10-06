@@ -1,31 +1,43 @@
 // radio.js — PeerJS "Balita Group" networking.
 // Topology: host relay bridge. The creator is the base station: every member
 // sends mic audio to the host, the host mixes all members + its own mic into a
-// single broadcast stream and sends that back to everyone. Member count lives
-// on the host and is broadcast to the whole channel on every change.
+// single broadcast stream and sends that back to everyone. Member count and
+// chat live on the host and are broadcast to the whole channel.
 (function () {
   "use strict";
 
   var HOST_PREFIX = "anongbalita-h-";
   var NODE_PREFIX = "anongbalita-n-";
+  var MAX_HANDLE = 32;
+  var MAX_CHAT = 500;
 
-  function hostPeerId(code) {
-    return HOST_PREFIX + String(code).toLowerCase();
+  function hostPeerId(handle) {
+    return HOST_PREFIX + cleanHandle(handle);
   }
   function newNodeId() {
     return NODE_PREFIX + Math.random().toString(36).slice(2, 11);
   }
 
-  var CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no I O 0 1
-  function makeCode(len) {
+  // Channels are human-chosen but must map onto a safe PeerJS id:
+  // letters/numbers/dash/underscore only, spaces become dashes.
+  function cleanHandle(s) {
+    return String(s || "")
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9_-]/g, "")
+      .replace(/-{2,}/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, MAX_HANDLE);
+  }
+
+  var HANDLE_ALPHABET = "abcdefghjkmnpqrstuvwxyz23456789"; // no i l o 0 1
+  function makeHandle(len) {
     var out = "";
-    for (var i = 0; i < (len || 5); i++) {
-      out += CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)];
+    for (var i = 0; i < (len || 8); i++) {
+      out += HANDLE_ALPHABET[Math.floor(Math.random() * HANDLE_ALPHABET.length)];
     }
     return out;
-  }
-  function cleanCode(s) {
-    return String(s || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 5);
   }
 
   function Radio(opts) {
@@ -34,11 +46,12 @@
     this.onStatus = opts.onStatus || function () {};
     this.onTalking = opts.onTalking || function () {};
     this.onSelf = opts.onSelf || function () {};
+    this.onChat = opts.onChat || function () {};
     this.onError = opts.onError || function () {};
 
     this.peer = null;
     this.isHost = false;
-    this.code = null;
+    this.handle = null;
     this.groupName = "";
     this.myName = "";
 
@@ -55,10 +68,10 @@
     this.meters = new Map();
   }
 
-  Radio.prototype._hostStart = function (code, groupName, name, mic) {
+  Radio.prototype._hostStart = function (handle, groupName, name, mic) {
     var self = this;
     this.isHost = true;
-    this.code = code;
+    this.handle = handle;
     this.groupName = groupName;
     this.myName = name;
     this.mic = mic;
@@ -72,7 +85,7 @@
 
     this.members = [{ peerId: "host", name: name, isHost: true, talking: false }];
 
-    this.peer = new Peer(hostPeerId(code));
+    this.peer = new Peer(hostPeerId(handle));
     this.peer.on("open", function () {
       self.onStatus("online");
     });
@@ -105,7 +118,7 @@
         }
         conn.send({
           type: "welcome",
-          code: self.code,
+          handle: self.handle,
           groupName: self.groupName,
           hostName: self.myName,
           members: self.members
@@ -123,6 +136,16 @@
             active: !!data.active
           });
         }
+      } else if (data.type === "chat" && rec) {
+        var msg = {
+          id: data.id || String(Date.now()) + Math.random().toString(36).slice(2, 6),
+          peerId: conn.peer,
+          name: rec.name,
+          text: String(data.text || "").slice(0, MAX_CHAT),
+          ts: Date.now()
+        };
+        self._broadcastExcept(conn.peer, { type: "chat", msg: msg });
+        self.onChat(msg);
       }
     });
     conn.on("close", function () {
@@ -152,7 +175,6 @@
       g.gain.value = 0.9;
       src.connect(g).connect(self.broadcastDest);
 
-      // Host monitors members locally (host never plays its own broadcast).
       window.RadioAudio.attachAudio(call.peer, stream);
       self.meters.set(call.peer, window.RadioAudio.makeLevelMeter(stream, self.ctx));
 
@@ -165,10 +187,10 @@
     });
   };
 
-  Radio.prototype._joinStart = function (code, name, mic) {
+  Radio.prototype._joinStart = function (handle, name, mic) {
     var self = this;
     this.isHost = false;
-    this.code = code;
+    this.handle = handle;
     this.myName = name;
     this.mic = mic;
     this.ctx = window.RadioAudio.getCtx();
@@ -188,7 +210,7 @@
 
   Radio.prototype._connectToHost = function () {
     var self = this;
-    var hostId = hostPeerId(this.code);
+    var hostId = hostPeerId(this.handle);
     var conn = this.peer.connect(hostId, { reliable: true });
     this.hostConn = conn;
 
@@ -202,13 +224,15 @@
       if (data.type === "welcome") {
         self.groupName = data.groupName || "";
         self.members = data.members || self.members;
-        self.onSelf({ groupName: self.groupName, code: self.code });
+        self.onSelf({ groupName: self.groupName, handle: self.handle });
         self.onMembers(self.members);
       } else if (data.type === "members") {
         self.members = data.members || [];
         self.onMembers(self.members);
       } else if (data.type === "ptt") {
         self.onTalking({ peerId: data.peerId, name: data.name, active: !!data.active });
+      } else if (data.type === "chat") {
+        self.onChat(data.msg);
       }
     });
     conn.on("close", function () {
@@ -250,17 +274,27 @@
     });
   };
 
+  Radio.prototype._broadcastExcept = function (exceptPeerId, msg) {
+    this.nodes.forEach(function (rec, peerId) {
+      if (peerId === exceptPeerId) return;
+      if (rec.conn && rec.conn.open) {
+        try { rec.conn.send(msg); } catch (e) {}
+      }
+    });
+  };
+
   Radio.prototype._broadcastMembers = function () {
     this._broadcast({ type: "members", members: this.members });
   };
 
   Radio.prototype.startHost = function (opts) {
-    this._hostStart(opts.code || makeCode(5), opts.groupName || "BALITA GROUP", opts.name, opts.mic);
-    return this.code;
+    var handle = cleanHandle(opts.handle) || makeHandle(8);
+    this._hostStart(handle, opts.groupName || "BALITA GROUP", opts.name, opts.mic);
+    return handle;
   };
 
   Radio.prototype.startJoin = function (opts) {
-    this._joinStart(cleanCode(opts.code), opts.name, opts.mic);
+    this._joinStart(cleanHandle(opts.handle), opts.name, opts.mic);
   };
 
   // PTT control. on=true means transmitting.
@@ -276,6 +310,24 @@
       }
       if (this.hostConn && this.hostConn.open) {
         try { this.hostConn.send({ type: "ptt", active: on }); } catch (e) {}
+      }
+    }
+  };
+
+  // Chat. Host echoes locally and relays to everyone else; a joiner echoes
+  // locally and hands the message to the host for distribution.
+  Radio.prototype.sendChat = function (text) {
+    text = String(text || "").trim().slice(0, MAX_CHAT);
+    if (!text) return;
+    var id = String(Date.now()) + Math.random().toString(36).slice(2, 6);
+    if (this.isHost) {
+      var msg = { id: id, peerId: "host", name: this.myName, text: text, ts: Date.now(), self: true };
+      this.onChat(msg);
+      this._broadcast({ type: "chat", msg: { id: id, peerId: "host", name: this.myName, text: text, ts: msg.ts } });
+    } else {
+      this.onChat({ id: id, peerId: "me", name: this.myName, text: text, ts: Date.now(), self: true });
+      if (this.hostConn && this.hostConn.open) {
+        try { this.hostConn.send({ type: "chat", id: id, text: text }); } catch (e) {}
       }
     }
   };
@@ -310,8 +362,10 @@
 
   window.RadioNet = {
     Radio: Radio,
-    makeCode: makeCode,
-    cleanCode: cleanCode,
-    hostPeerId: hostPeerId
+    makeHandle: makeHandle,
+    cleanHandle: cleanHandle,
+    hostPeerId: hostPeerId,
+    MAX_HANDLE: MAX_HANDLE,
+    MAX_CHAT: MAX_CHAT
   };
 })();

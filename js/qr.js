@@ -1,37 +1,36 @@
-// qr.js — thin wrapper around the `qrcode` CDN library.
-// Renders the join URL into a canvas with a retro monochrome palette.
+// qr.js — renders the join URL as a crisp SVG QR using qrcode-generator.
 (function () {
   "use strict";
 
-  function joinUrl(code) {
-    var base = location.origin + location.pathname;
-    return base + "#join=" + encodeURIComponent(code);
+  function joinUrl(handle) {
+    // Clean URL (no index.html) so the #join fragment survives the host's
+    // index.html -> / redirect.
+    var base = location.origin + location.pathname
+      .replace(/index\.html$/i, "")
+      .replace(/\/+$/, "");
+    return base + "/#join=" + encodeURIComponent(handle);
   }
 
-  function render(canvas, text, cb) {
-    if (!canvas) return;
-    if (!window.QRCode || !window.QRCode.toCanvas) {
-      cb && cb(new Error("QR library unavailable"));
+  function render(container, text, cb) {
+    if (!container) return;
+    if (typeof window.qrcode !== "function") {
+      if (cb) cb(new Error("QR library unavailable"));
       return;
     }
-    window.QRCode.toCanvas(
-      canvas,
-      text,
-      {
-        width: 168,
-        margin: 2,
-        color: { dark: "#0b1a0b", light: "#7dff9b" },
-        errorCorrectionLevel: "M"
-      },
-      function (err) {
-        cb && cb(err || null);
-      }
-    );
+    try {
+      var qr = window.qrcode(0, "M"); // type 0 = auto, medium error correction
+      qr.addData(text);
+      qr.make();
+      container.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+      if (cb) cb(null);
+    } catch (e) {
+      if (cb) cb(e);
+    }
   }
 
-  function renderCode(canvas, code, cb) {
-    render(canvas, joinUrl(code), cb);
+  function renderHandle(container, handle, cb) {
+    render(container, joinUrl(handle), cb);
   }
 
-  window.RadioQR = { joinUrl: joinUrl, render: render, renderCode: renderCode };
+  window.RadioQR = { joinUrl: joinUrl, render: render, renderHandle: renderHandle };
 })();

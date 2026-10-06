@@ -2,102 +2,109 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<meta name="theme-color" content="#0b1a0b" />
-<title>ANONG BALITA? — INFO</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#c8c7cc" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<title>Anong Balita? — Info</title>
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="icons/icon-192.png" />
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="css/retro.css" />
+<link rel="stylesheet" href="css/ios.css" />
 </head>
 <body>
-<div class="crt-bg" aria-hidden="true"></div>
+<div class="device">
 
-<header class="site-head">
-  <a class="brand" href="index.html">
-    <h1>ANONG BALITA?</h1>
-  </a>
-  <nav class="site-nav">
-    <a href="index.html">RADIO</a>
-    <a href="info.html" class="active">INFO</a>
+  <div class="statusbar">
+    <span class="sb-left"><span class="signal"><i></i><i></i><i></i><i></i></span><span class="sb-carrier">BALITA</span></span>
+    <span class="sb-clock" id="status-clock">--:--</span>
+    <span class="sb-right"><span class="sb-pct">100%</span><span class="battery"><b></b></span></span>
+  </div>
+
+  <header class="navbar">
+    <a class="nav-back" href="index.html">Radio</a>
+    <span class="nav-title">Info</span>
+  </header>
+
+  <main class="app manual">
+
+    <h2 class="section-header">Getting Started</h2>
+    <div class="group">
+      <div class="cell">
+        <p><b>Anong Balita?</b> is a pocket walkie-talkie and chat that runs right in the browser. Spin up a channel, hand out the <b>handle</b> or QR, and everyone who tunes in can talk push-to-talk and text each other.</p>
+      </div>
+    </div>
+
+    <h2 class="section-header">Start a Channel</h2>
+    <div class="group">
+      <div class="cell"><span class="cell-num">1</span>Choose <b>Create</b> on the Radio tab.</div>
+      <div class="cell"><span class="cell-num">2</span>Name your Balita Group and pick a reusable <b>Channel Handle</b> (3–32 characters).</div>
+      <div class="cell"><span class="cell-num">3</span>Tap <b>Broadcast</b>. You become the base station.</div>
+      <div class="cell"><span class="cell-num">4</span>Share the handle or let people scan the QR.</div>
+    </div>
+
+    <h2 class="section-header">Tune In</h2>
+    <div class="group">
+      <div class="cell"><span class="cell-num">1</span>Choose <b>Join</b>, enter the handle and a name.</div>
+      <div class="cell"><span class="cell-num">2</span>Tap <b>Tune In</b> — or scan the QR to fill it in.</div>
+      <div class="cell">The handle is remembered, so you can reuse it any time.</div>
+    </div>
+
+    <h2 class="section-header">Push to Talk &amp; Chat</h2>
+    <div class="group">
+      <div class="cell">Hold the red <b>Push to Talk</b> button (or the spacebar) to transmit. Release to listen — a roger beep confirms you're off the air.</div>
+      <div class="cell">The <b>OPS</b> counter shows how many units are connected.</div>
+      <div class="cell">Use the <b>Chat</b> tab to send text to everyone on the channel.</div>
+    </div>
+
+    <h2 class="section-header">Background Audio</h2>
+    <div class="group">
+      <div class="cell">The app asks the browser to keep the radio alive so you keep receiving when the tab is hidden or the phone is idle.</div>
+      <div class="cell">On <b>iOS Safari</b>, Apple suspends background web audio, so receiving may pause when the app is fully minimized — a platform limit, not a bug.</div>
+    </div>
+
+    <h2 class="section-header">Where Is My Data Saved?</h2>
+    <div class="group">
+      <div class="cell"><b>Short answer: it isn't.</b> There is no database and no recording.</div>
+      <div class="cell"><span class="cell-dot"></span><b>Voice</b>&nbsp; travels peer-to-peer over encrypted WebRTC, mixed live on the base station. Nothing is recorded.</div>
+      <div class="cell"><span class="cell-dot"></span><b>Chat</b>&nbsp; is relayed live through the base station and kept only in memory — cleared when you end the channel.</div>
+      <div class="cell"><span class="cell-dot"></span><b>Signaling</b>&nbsp; uses the public PeerJS cloud only to introduce browsers. No audio or messages are stored there.</div>
+      <div class="cell"><span class="cell-dot"></span><b>QR codes</b>&nbsp; are drawn locally in your browser.</div>
+      <div class="cell"><span class="cell-dot"></span><b>Group name, handle and code</b>&nbsp; stay in memory. Your last handle is kept on your own device only, so you can resume.</div>
+      <div class="cell">No accounts, no cookies, no analytics, no tracking.</div>
+    </div>
+
+    <h2 class="section-header">Notes &amp; Limits</h2>
+    <div class="group">
+      <div class="cell">The base station must stay connected; if the host leaves, the channel closes.</div>
+      <div class="cell">The more units connected, the more the base station carries.</div>
+      <div class="cell">Microphone access is required — grant it when asked.</div>
+      <div class="cell">Everyone on the same handle hears and sees each other. Don't share a handle you don't trust.</div>
+    </div>
+
+    <p class="credit">created by ged</p>
+
+  </main>
+
+  <nav class="tabbar">
+    <a class="tab" href="index.html"><span class="tab-ico">&#128225;</span>Radio</a>
+    <a class="tab" href="index.html#chat"><span class="tab-ico">&#128172;</span>Chat</a>
+    <a class="tab active" href="info.html"><span class="tab-ico">&#8505;</span>Info</a>
   </nav>
-</header>
 
-<main class="manual">
-  <section class="manual-sheet">
-    <h2>OPERATOR'S MANUAL</h2>
-    <p class="manual-sub">MODEL AB-7 &middot; BALITA BAND TRANSCEIVER</p>
+  <div class="home-indicator"></div>
+</div>
 
-    <h3>1. WHAT IS THIS?</h3>
-    <p>
-      <strong>Anong Balita?</strong> ("What's the news?") is a pocket walkie talkie that runs
-      entirely in your web browser. Spin up a channel called a <em>Balita Group</em>, hand out
-      the code or QR, and everybody who tunes in can talk to each other push-to-talk.
-    </p>
-
-    <h3>2. STARTING A BALITA GROUP</h3>
-    <ol>
-      <li>On the <a href="index.html">RADIO</a> page choose <strong>CREATE</strong>.</li>
-      <li>Type a Balita Group Name (e.g. <span class="mono">TONDO PATROL</span>) and your handle.</li>
-      <li>Hit <strong>BROADCAST</strong>. You become the <em>base station</em> and get a 5-character code plus a QR.</li>
-      <li>Share the code or let people scan the QR. They land straight on the channel.</li>
-    </ol>
-
-    <h3>3. TUNING IN</h3>
-    <ol>
-      <li>Choose <strong>JOIN</strong>, enter the 5-character code and a handle, then <strong>TUNE IN</strong>.</li>
-      <li>Or scan the QR — the code fills in for you.</li>
-    </ol>
-
-    <h3>4. PUSH TO TALK</h3>
-    <p>
-      Hold the big red <strong>PUSH TO TALK</strong> button — or hold the <span class="mono">SPACE</span> bar —
-      to transmit. Release to listen. A roger beep confirms you're off the air.
-      The <span class="mono">OPS</span> counter shows how many units are connected to the channel.
-    </p>
-
-    <h3>5. BACKGROUND / SCREEN OFF</h3>
-    <p>
-      This app asks the browser to keep the radio alive so you keep receiving audio when the tab
-      is hidden or the phone is idle. On supported browsers (desktop and Android) audio keeps
-      flowing in the background. On <strong>iOS Safari</strong>, Apple suspends background web audio,
-      so receiving may pause when the app is fully minimized — that's a platform limit, not a bug.
-    </p>
-
-    <h3>6. WHERE IS MY DATA SAVED?</h3>
-    <div class="data-box">
-      <p><strong>Short answer: it isn't.</strong> There is no database and no recording.</p>
-      <ul>
-        <li><strong>Voice audio</strong> travels <em>peer-to-peer</em> over encrypted WebRTC. It is mixed live on the base station and passed on. Nothing is recorded or stored.</li>
-        <li><strong>Signaling</strong> uses the public PeerJS cloud server <em>only</em> to introduce two browsers to each other. No audio or messages are stored there.</li>
-        <li><strong>QR codes</strong> are drawn locally in your browser. No image is uploaded anywhere.</li>
-        <li><strong>Group name, handles and code</strong> live in memory for the duration of the call and vanish when you end the channel.</li>
-        <li><strong>No accounts, no cookies, no analytics, no tracking.</strong></li>
-      </ul>
-    </div>
-
-    <h3>7. NOTES &amp; LIMITS</h3>
-    <ul>
-      <li>The base station must stay connected. If the host leaves, the channel closes.</li>
-      <li>The more units connected, the more the base station's connection carries. It scales, but a phone on a weak line has limits.</li>
-      <li>Mic access is required — grant it when asked.</li>
-      <li>Everyone on the same code hears each other. Don't share a code you don't trust.</li>
-    </ul>
-
-    <div class="signoff">
-      <a class="big-btn" href="index.html">&#9654; BACK TO RADIO</a>
-    </div>
-  </section>
-</main>
-
-<footer class="site-foot">
-  <span>ANONG BALITA? &middot; an open source walkie talkie</span>
-  <span class="credit">created by ged</span>
-</footer>
-
-<script src="js/audio.js"></script>
+<script>
+  (function () {
+    function tick() {
+      var d = new Date();
+      var el = document.getElementById("status-clock");
+      if (el) el.textContent = ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2);
+    }
+    tick();
+    setInterval(tick, 15000);
+  })();
+</script>
 </body>
 </html>

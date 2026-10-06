@@ -1,17 +1,20 @@
-// app.js — UI controller for Anong Balita?.
+// app.js — UI controller for Anong Balita? (iPhone 4 edition).
 (function () {
   "use strict";
 
   var $ = function (id) { return document.getElementById(id); };
+  var MIN_HANDLE = 3;
 
   var state = {
     mode: "host",
+    role: "host",
+    view: "radio",
     net: null,
     mic: null,
     inChannel: false,
     transmitting: false,
     members: [],
-    code: "",
+    handle: "",
     groupName: "",
     wakeLock: null,
     vu: 0,
@@ -19,32 +22,23 @@
     hostRetries: 0
   };
 
-  var SESSION_KEY = "anongbalita.session.v1";
+  var SESSION_KEY = "anongbalita.session.v2";
 
-  function saveSession(role, code, name, groupName) {
+  function saveSession(role, handle, name, groupName) {
     try {
       localStorage.setItem(SESSION_KEY, JSON.stringify({
-        role: role,
-        code: code || "",
-        name: name || "",
-        groupName: groupName || "",
-        ts: Date.now()
+        role: role, handle: handle || "", name: name || "",
+        groupName: groupName || "", ts: Date.now()
       }));
     } catch (e) {}
   }
-
   function loadSession() {
     try {
-      var raw = localStorage.getItem(SESSION_KEY);
-      if (!raw) return null;
-      var s = JSON.parse(raw);
+      var s = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
       if (!s || (s.role !== "host" && s.role !== "join")) return null;
       return s;
-    } catch (e) {
-      return null;
-    }
+    } catch (e) { return null; }
   }
-
   function clearSession() {
     try { localStorage.removeItem(SESSION_KEY); } catch (e) {}
   }
@@ -54,7 +48,6 @@
     if (!el) return;
     el.classList.toggle("hidden", !on);
   }
-
   function setStatus(text, cls) {
     var el = $("home-status");
     if (!el) return;
@@ -62,11 +55,14 @@
     el.className = "status-line" + (cls ? " " + cls : "");
   }
 
-  function flash(el) {
-    if (!el) return;
-    el.classList.remove("blip");
-    void el.offsetWidth;
-    el.classList.add("blip");
+  // ------------------------------------------------------------------ tabs
+  function switchView(name) {
+    state.view = name;
+    show($("view-radio"), name === "radio");
+    show($("view-chat"), name === "chat");
+    document.querySelectorAll(".tabbar [data-tab]").forEach(function (b) {
+      b.classList.toggle("active", b.getAttribute("data-tab") === name);
+    });
   }
 
   // ------------------------------------------------------------ mode switch
@@ -77,7 +73,7 @@
     });
     show($("form-host"), mode === "host");
     show($("form-join"), mode === "join");
-    setStatus(mode === "host" ? "SET A FREQUENCY TO BROADCAST..." : "ENTER A CODE TO TUNE IN...");
+    setStatus(mode === "host" ? "SET A CHANNEL TO BROADCAST..." : "ENTER A HANDLE TO TUNE IN...");
   }
 
   // --------------------------------------------------------------- channel
@@ -88,7 +84,10 @@
     show($("screen-channel"), true);
     show($("btn-leave"), true);
     $("chan-group").textContent = state.groupName || "----";
-    $("chan-code").textContent = state.code || "-----";
+    $("chan-handle").textContent = state.handle || "-----";
+    switchView("radio");
+    setChatEnabled(true);
+    addSystem("TUNED IN TO " + String(state.handle).toUpperCase());
     requestWakeLock();
     setMediaSession();
     window.RadioAudio.resumeCtx();
@@ -96,8 +95,7 @@
 
   function renderMembers(members) {
     state.members = members || [];
-    var count = state.members.length;
-    $("chan-count").textContent = count;
+    $("chan-count").textContent = state.members.length;
     var roster = $("roster");
     roster.innerHTML = "";
     state.members.forEach(function (m) {
@@ -112,80 +110,142 @@
       var tag = document.createElement("span");
       tag.className = "member-tag";
       tag.textContent = m.isHost ? "BASE" : "UNIT";
-      li.appendChild(dot);
-      li.appendChild(name);
-      li.appendChild(tag);
+      li.appendChild(dot); li.appendChild(name); li.appendChild(tag);
       roster.appendChild(li);
     });
   }
 
-  function setTalking(peerId, active, name) {
+  function setTalking(peerId, active) {
     if (active) state.talking.add(peerId);
     else state.talking.delete(peerId);
-    if (active) {
-      $("led-rx").classList.add("on");
-    }
     renderMembers(state.members);
   }
 
+  // ------------------------------------------------------------------ chat
+  function addSystem(text) {
+    var log = $("chat-log");
+    if (!log) return;
+    var li = document.createElement("li");
+    li.className = "chat-system";
+    li.textContent = "\u2014 " + text + " \u2014";
+    log.appendChild(li);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function addChat(msg) {
+    if (!msg) return;
+    var log = $("chat-log");
+    if (!log) return;
+    var out = !!msg.self;
+    var li = document.createElement("li");
+    li.className = "bubble " + (out ? "out" : "in");
+    var meta = document.createElement("div");
+    meta.className = "bubble-meta";
+    meta.textContent = (out ? "YOU" : (msg.name || "???").toUpperCase()) + " \u00b7 " + timeOf(msg.ts);
+    var body = document.createElement("div");
+    body.className = "bubble-text";
+    body.textContent = msg.text;
+    li.appendChild(meta);
+    li.appendChild(body);
+    log.appendChild(li);
+    log.scrollTop = log.scrollHeight;
+    window.RadioAudio.squelchOpen();
+  }
+
+  function clearChat() {
+    var log = $("chat-log");
+    if (log) log.innerHTML = "";
+  }
+
+  function setChatEnabled(on) {
+    var input = $("chat-input");
+    var send = $("chat-send");
+    if (input) { input.disabled = !on; input.placeholder = on ? "Message" : "Tune in to chat"; }
+    if (send) send.disabled = !on;
+    var empty = $("chat-empty");
+    if (empty) empty.classList.toggle("hidden", on);
+  }
+
+  function sendChat() {
+    var input = $("chat-input");
+    if (!input || !state.inChannel) return;
+    var text = input.value.trim();
+    if (!text) return;
+    input.value = "";
+    if (state.net) state.net.sendChat(text);
+  }
+
+  function timeOf(ts) {
+    var d = ts ? new Date(ts) : new Date();
+    return ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2);
+  }
+
   // ------------------------------------------------------------------ host
-  async function doHost(forceCode) {
-    if (forceCode && typeof forceCode !== "string") forceCode = null;
+  async function doHost(forceHandle) {
+    if (forceHandle && typeof forceHandle !== "string") forceHandle = null;
     var groupName = ($("input-group-name").value || "").trim();
+    var handle = window.RadioNet.cleanHandle(forceHandle || $("input-handle").value);
     var name = ($("input-host-name").value || "").trim() || "BASE";
     if (!groupName) {
-      setStatus("!! ENTER A BALITA GROUP NAME !!", "err");
+      setStatus("!! NAME YOUR BALITA GROUP !!", "err");
       $("input-group-name").focus();
       return;
     }
-    var code = /^[A-Z0-9]{5}$/.test(forceCode || "") ? forceCode : window.RadioNet.makeCode(5);
-    saveSession("host", code, name, groupName);
+    if (handle.length < MIN_HANDLE) {
+      handle = window.RadioNet.makeHandle(8);
+      $("input-handle").value = handle;
+    }
+    state.role = "host";
+    saveSession("host", handle, name, groupName);
     await boot(function () {
       state.groupName = groupName;
-      state.code = code;
+      state.handle = handle;
       var net = new window.RadioNet.Radio({
         onMembers: renderMembers,
         onStatus: onNetStatus,
-        onTalking: function (t) { setTalking(t.peerId, t.active, t.name); },
+        onTalking: function (t) { setTalking(t.peerId, t.active); },
+        onChat: addChat,
         onSelf: function (s) { state.groupName = s.groupName || state.groupName; },
         onError: onError
       });
-      net.startHost({ code: code, groupName: groupName, name: name, mic: state.mic });
+      net.startHost({ handle: handle, groupName: groupName, name: name, mic: state.mic });
       state.net = net;
       enterChannel();
-      window.RadioQR.renderCode($("qr"), code, function () {});
+      window.RadioQR.renderHandle($("qr"), handle, function () {});
       $("qr-wrap").classList.remove("hidden");
     });
   }
 
   // ------------------------------------------------------------------ join
   async function doJoin() {
-    var code = window.RadioNet.cleanCode($("input-join-code").value);
+    var handle = window.RadioNet.cleanHandle($("input-join-handle").value);
     var name = ($("input-join-name").value || "").trim() || "UNIT";
-    if (code.length < 5) {
-      setStatus("!! CODE MUST BE 5 CHARACTERS !!", "err");
-      $("input-join-code").focus();
+    if (handle.length < MIN_HANDLE) {
+      setStatus("!! HANDLE MUST BE " + MIN_HANDLE + "+ CHARACTERS !!", "err");
+      $("input-join-handle").focus();
       return;
     }
-    saveSession("join", code, name, "");
+    state.role = "join";
+    saveSession("join", handle, name, "");
     await boot(function () {
       var net = new window.RadioNet.Radio({
         onMembers: renderMembers,
         onStatus: onNetStatus,
-        onTalking: function (t) { setTalking(t.peerId, t.active, t.name); },
+        onTalking: function (t) { setTalking(t.peerId, t.active); },
+        onChat: addChat,
         onSelf: function (s) {
           state.groupName = s.groupName || "";
           $("chan-group").textContent = state.groupName || "----";
-          saveSession("join", code, name, state.groupName);
+          saveSession("join", handle, name, state.groupName);
         },
         onError: onError
       });
       state.net = net;
-      state.code = code;
+      state.handle = handle;
       state.groupName = "";
       enterChannel();
       $("qr-wrap").classList.add("hidden");
-      net.startJoin({ code: code, name: name, mic: state.mic });
+      net.startJoin({ handle: handle, name: name, mic: state.mic });
     });
   }
 
@@ -196,7 +256,7 @@
     try {
       state.mic = await window.RadioAudio.getMic();
     } catch (e) {
-      setStatus("!! MIC BLOCKED — TAP THE BUTTON TO ALLOW & RESUME !!", "err");
+      setStatus("!! MIC BLOCKED — TAP TO ALLOW & RESUME !!", "err");
       throw e;
     }
     state.mic.getAudioTracks().forEach(function (t) { t.enabled = false; });
@@ -214,19 +274,17 @@
   function onError(err) {
     var msg = (err && err.type) ? err.type : "ERROR";
     if (msg === "unavailable-id") {
-      // Frequency already held (usually the previous session still registered
-      // after a reload). Reclaim it a few times before giving up.
-      if (state.mode === "host" && state.hostRetries < 3 && state.code) {
+      if (state.mode === "host" && state.hostRetries < 3 && state.handle) {
         state.hostRetries++;
-        setStatus("FREQ BUSY — RECLAIMING " + state.code + "...", "ok");
+        setStatus("HANDLE BUSY — RECLAIMING " + state.handle + "...", "ok");
         dropNet();
-        setTimeout(function () { doHost(state.code); }, 1500);
+        setTimeout(function () { doHost(state.handle); }, 1500);
         return;
       }
-      setStatus("!! FREQUENCY IN USE — TRY AGAIN !!", "err");
+      setStatus("!! HANDLE IN USE — TRY ANOTHER !!", "err");
       teardown(false);
     } else if (msg === "peer-unavailable") {
-      setStatus("!! NO STATION ON THAT FREQUENCY !!", "err");
+      setStatus("!! NO STATION ON THAT HANDLE !!", "err");
       teardown(false);
     } else if (msg !== "network") {
       setStatus("!! " + String(msg).toUpperCase() + " !!", "err");
@@ -243,7 +301,6 @@
     window.RadioAudio.squelchOpen();
     if (state.net) state.net.setTransmitting(true);
   }
-
   function pttUp(e) {
     if (!state.transmitting) return;
     if (e) e.preventDefault();
@@ -271,7 +328,8 @@
     show($("screen-channel"), false);
     show($("screen-home"), true);
     show($("btn-leave"), false);
-    document.querySelector(".unit").classList.remove("in-channel");
+    setChatEnabled(false);
+    clearChat();
     if (clearSaved) {
       clearSession();
       setStatus("CHANNEL CLOSED.", "");
@@ -292,9 +350,9 @@
     if (!("mediaSession" in navigator) || !window.MediaMetadata) return;
     try {
       navigator.mediaSession.metadata = new window.MediaMetadata({
-        title: "ANONG BALITA?",
+        title: "Anong Balita?",
         artist: state.groupName || "BALITA GROUP",
-        album: "FREQ " + (state.code || "")
+        album: "CH " + (state.handle || "")
       });
       navigator.mediaSession.playbackState = "playing";
     } catch (e) {}
@@ -313,7 +371,7 @@
     var d = new Date();
     var hh = ("0" + d.getHours()).slice(-2);
     var mm = ("0" + d.getMinutes()).slice(-2);
-    var el = $("clock");
+    var el = $("status-clock");
     if (el) el.textContent = hh + ":" + mm;
   }
 
@@ -321,7 +379,7 @@
   function buildVu() {
     var wrap = $("vu-bars");
     if (!wrap || wrap.childElementCount) return;
-    for (var i = 0; i < 14; i++) {
+    for (var i = 0; i < 12; i++) {
       var b = document.createElement("span");
       b.className = "vu-bar";
       wrap.appendChild(b);
@@ -335,35 +393,47 @@
       var mic = self ? self.getLevel() : 0;
       var inc = state.net.incomingLevel();
       level = Math.max(mic, inc);
-      var rx = inc > 0.06 && !state.transmitting;
-      $("led-rx").classList.toggle("on", rx);
+      $("led-rx").classList.toggle("on", inc > 0.06 && !state.transmitting);
     }
     state.vu = state.vu * 0.7 + level * 0.3;
     var bars = $("vu-bars").children;
     var lit = Math.round(state.vu * bars.length);
-    for (var i = 0; i < bars.length; i++) {
-      bars[i].classList.toggle("lit", i < lit);
-    }
+    for (var i = 0; i < bars.length; i++) bars[i].classList.toggle("lit", i < lit);
   }
 
   // ------------------------------------------------------------------- init
   function init() {
     buildVu();
     setMode("host");
+    setChatEnabled(false);
 
     document.querySelectorAll(".mode-switch button").forEach(function (b) {
       b.addEventListener("click", function () { setMode(b.getAttribute("data-mode")); });
     });
-
-    $("input-join-code").addEventListener("input", function (e) {
-      e.target.value = window.RadioNet.cleanCode(e.target.value);
+    document.querySelectorAll(".tabbar [data-tab]").forEach(function (b) {
+      b.addEventListener("click", function () { switchView(b.getAttribute("data-tab")); });
     });
 
+    $("input-join-handle").addEventListener("input", function (e) {
+      e.target.value = window.RadioNet.cleanHandle(e.target.value);
+    });
+    $("input-handle").addEventListener("input", function (e) {
+      e.target.value = window.RadioNet.cleanHandle(e.target.value);
+    });
+
+    $("btn-random").addEventListener("click", function () {
+      $("input-handle").value = window.RadioNet.makeHandle(8);
+    });
     $("btn-create").addEventListener("click", function () { doHost(); });
     $("btn-join").addEventListener("click", function () { doJoin(); });
     $("btn-leave").addEventListener("click", function () {
       window.RadioAudio.rogerBeep();
       teardown(true);
+    });
+
+    $("chat-send").addEventListener("click", sendChat);
+    $("chat-input").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") { e.preventDefault(); sendChat(); }
     });
 
     var ptt = $("ptt");
@@ -374,22 +444,24 @@
     ptt.addEventListener("contextmenu", function (e) { e.preventDefault(); });
 
     document.addEventListener("keydown", function (e) {
-      if (e.code === "Space" && !e.repeat && document.activeElement.tagName !== "INPUT") {
-        pttDown(e);
-      }
+      var tag = document.activeElement && document.activeElement.tagName;
+      if (e.code === "Space" && !e.repeat && tag !== "INPUT" && tag !== "TEXTAREA") pttDown(e);
     });
     document.addEventListener("keyup", function (e) {
       if (e.code === "Space") pttUp(e);
     });
 
-    // Restore the last channel. A scanned QR wins over the saved one.
+    // Restore last channel; a scanned QR (#join=) wins over the saved one.
     var saved = loadSession();
-    var m = /join=([A-Za-z0-9]+)/.exec(location.hash || "");
-    if (m) {
+    var joinMatch = /join=([^&]+)/.exec(location.hash || "");
+    if (joinMatch) {
       setMode("join");
-      $("input-join-code").value = window.RadioNet.cleanCode(m[1]);
+      $("input-join-handle").value = window.RadioNet.cleanHandle(decodeURIComponent(joinMatch[1]));
       if (saved && saved.name) $("input-join-name").value = saved.name;
-      setStatus("CODE DETECTED — ADD A HANDLE AND TUNE IN.", "ok");
+      switchView("radio");
+      setStatus("CODE DETECTED — ADD A NAME AND TUNE IN.", "ok");
+    } else if (/#chat/.test(location.hash || "")) {
+      switchView("chat");
     } else if (saved) {
       setMode(saved.role === "join" ? "join" : "host");
       if (saved.groupName) $("input-group-name").value = saved.groupName;
@@ -397,11 +469,14 @@
         $("input-host-name").value = saved.name;
         $("input-join-name").value = saved.name;
       }
-      if (saved.code) $("input-join-code").value = saved.code;
-      setStatus("RESUMING " + (saved.code || "LAST CHANNEL") + "...", "ok");
+      if (saved.handle) {
+        $("input-handle").value = saved.handle;
+        $("input-join-handle").value = saved.handle;
+      }
+      setStatus("RESUMING " + String(saved.handle || "LAST CHANNEL").toUpperCase() + "...", "ok");
       setTimeout(function () {
         if (saved.role === "join") doJoin();
-        else doHost(saved.code);
+        else doHost(saved.handle);
       }, 500);
     }
 
