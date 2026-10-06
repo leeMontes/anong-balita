@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#0b1a0b" />
+<title>ANONG BALITA? — INFO</title>
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/retro.css" />
+</head>
+<body>
+<div class="crt-bg" aria-hidden="true"></div>
+
+<header class="site-head">
+  <a class="brand" href="index.html">
+    <span class="brand-wave">((•))</span>
+    <h1>ANONG BALITA?</h1>
+  </a>
+  <nav class="site-nav">
+    <a href="index.html">RADIO</a>
+    <a href="info.html" class="active">INFO</a>
+  </nav>
+</header>
+
+<main class="manual">
+  <section class="manual-sheet">
+    <h2>OPERATOR'S MANUAL</h2>
+    <p class="manual-sub">MODEL AB-7 &middot; BALITA BAND TRANSCEIVER</p>
+
+    <h3>1. WHAT IS THIS?</h3>
+    <p>
+      <strong>Anong Balita?</strong> ("What's the news?") is a pocket walkie talkie that runs
+      entirely in your web browser. Spin up a channel called a <em>Balita Group</em>, hand out
+      the code or QR, and everybody who tunes in can talk to each other push-to-talk.
+    </p>
+
+    <h3>2. STARTING A BALITA GROUP</h3>
+    <ol>
+      <li>On the <a href="index.html">RADIO</a> page choose <strong>CREATE</strong>.</li>
+      <li>Type a Balita Group Name (e.g. <span class="mono">TONDO PATROL</span>) and your handle.</li>
+      <li>Hit <strong>BROADCAST</strong>. You become the <em>base station</em> and get a 5-character code plus a QR.</li>
+      <li>Share the code or let people scan the QR. They land straight on the channel.</li>
+    </ol>
+
+    <h3>3. TUNING IN</h3>
+    <ol>
+      <li>Choose <strong>JOIN</strong>, enter the 5-character code and a handle, then <strong>TUNE IN</strong>.</li>
+      <li>Or scan the QR — the code fills in for you.</li>
+    </ol>
+
+    <h3>4. PUSH TO TALK</h3>
+    <p>
+      Hold the big red <strong>PUSH TO TALK</strong> button — or hold the <span class="mono">SPACE</span> bar —
+      to transmit. Release to listen. A roger beep confirms you're off the air.
+      The <span class="mono">OPS</span> counter shows how many units are connected to the channel.
+    </p>
+
+    <h3>5. BACKGROUND / SCREEN OFF</h3>
+    <p>
+      This app asks the browser to keep the radio alive so you keep receiving audio when the tab
+      is hidden or the phone is idle. On supported browsers (desktop and Android) audio keeps
+      flowing in the background. On <strong>iOS Safari</strong>, Apple suspends background web audio,
+      so receiving may pause when the app is fully minimized — that's a platform limit, not a bug.
+    </p>
+
+    <h3>6. WHERE IS MY DATA SAVED?</h3>
+    <div class="data-box">
+      <p><strong>Short answer: it isn't.</strong> There is no database and no recording.</p>
+      <ul>
+        <li><strong>Voice audio</strong> travels <em>peer-to-peer</em> over encrypted WebRTC. It is mixed live on the base station and passed on. Nothing is recorded or stored.</li>
+        <li><strong>Signaling</strong> uses the public PeerJS cloud server <em>only</em> to introduce two browsers to each other. No audio or messages are stored there.</li>
+        <li><strong>QR codes</strong> are drawn locally in your browser. No image is uploaded anywhere.</li>
+        <li><strong>Group name, handles and code</strong> live in memory for the duration of the call and vanish when you end the channel.</li>
+        <li><strong>No accounts, no cookies, no analytics, no tracking.</strong></li>
+      </ul>
+    </div>
+
+    <h3>7. NOTES &amp; LIMITS</h3>
+    <ul>
+      <li>The base station must stay connected. If the host leaves, the channel closes.</li>
+      <li>The more units connected, the more the base station's connection carries. It scales, but a phone on a weak line has limits.</li>
+      <li>Mic access is required — grant it when asked.</li>
+      <li>Everyone on the same code hears each other. Don't share a code you don't trust.</li>
+    </ul>
+
+    <div class="signoff">
+      <a class="big-btn" href="index.html">&#9654; BACK TO RADIO</a>
+    </div>
+  </section>
+</main>
+
+<footer class="site-foot">
+  <span>ANONG BALITA? &middot; an open source walkie talkie</span>
+  <span class="credit">created by ged</span>
+</footer>
+
+<script src="js/audio.js"></script>
+</body>
+</html>

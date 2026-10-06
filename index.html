@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#0b1a0b" />
+<meta name="description" content="Anong Balita? — a retro peer-to-peer walkie talkie. Create a Balita Group, share a code or QR, and talk push-to-talk with everyone on the channel." />
+<title>ANONG BALITA?</title>
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/retro.css" />
+</head>
+<body>
+<div class="crt-bg" aria-hidden="true"></div>
+
+<header class="site-head">
+  <a class="brand" href="index.html">
+    <span class="brand-wave">((•))</span>
+    <h1>ANONG BALITA?</h1>
+  </a>
+  <nav class="site-nav">
+    <a href="index.html" class="active">RADIO</a>
+    <a href="info.html">INFO</a>
+  </nav>
+</header>
+
+<main class="unit" id="unit">
+  <div class="unit-top">
+    <div class="antenna" aria-hidden="true"><span></span></div>
+    <div class="unit-label">CB-7 / BALITA BAND</div>
+    <div class="speaker" aria-hidden="true"></div>
+  </div>
+
+  <div class="crt">
+    <div class="crt-glass"></div>
+    <div class="crt-inner">
+
+      <section id="screen-home" class="screen">
+        <div class="mode-switch">
+          <button type="button" data-mode="host">CREATE</button>
+          <button type="button" data-mode="join">JOIN</button>
+        </div>
+
+        <div id="form-host" class="form">
+          <label for="input-group-name">BALITA GROUP NAME</label>
+          <input id="input-group-name" maxlength="24" placeholder="TONDO PATROL" autocomplete="off" />
+          <label for="input-host-name">YOUR HANDLE</label>
+          <input id="input-host-name" maxlength="14" placeholder="BASE-1" autocomplete="off" />
+          <button type="button" id="btn-create" class="big-btn">&#9654; BROADCAST</button>
+        </div>
+
+        <div id="form-join" class="form hidden">
+          <label for="input-join-code">BALITA CODE</label>
+          <input id="input-join-code" class="code-input" maxlength="5" placeholder="X X X X X" autocomplete="off" inputmode="latin" />
+          <label for="input-join-name">YOUR HANDLE</label>
+          <input id="input-join-name" maxlength="14" placeholder="UNIT-2" autocomplete="off" />
+          <button type="button" id="btn-join" class="big-btn">&#9654; TUNE IN</button>
+        </div>
+
+        <p id="home-status" class="status-line">SELECT A FREQUENCY...</p>
+      </section>
+
+      <section id="screen-channel" class="screen hidden">
+        <div class="readout">
+          <div class="readout-row">
+            <span class="lbl">GRP</span>
+            <span id="chan-group" class="val">----</span>
+          </div>
+          <div class="readout-row">
+            <span class="lbl">FRQ</span>
+            <span id="chan-code" class="val code">-----</span>
+          </div>
+          <div class="readout-row">
+            <span class="lbl">OPS</span>
+            <span id="chan-count" class="val led-digits">1</span>
+            <span class="lbl online">CONNECTED</span>
+          </div>
+        </div>
+
+        <div class="channel-body">
+          <div id="qr-wrap" class="qr-wrap">
+            <canvas id="qr" width="168" height="168"></canvas>
+            <p>SCAN TO TUNE IN</p>
+          </div>
+          <ul id="roster" class="roster" aria-label="Connected units"></ul>
+        </div>
+      </section>
+
+    </div>
+    <div class="crt-meta">
+      <span class="crt-brand">ANONG BALITA</span>
+      <span id="clock" class="crt-clock">--:--</span>
+    </div>
+  </div>
+
+  <div class="vu-panel">
+    <span class="vu-label">SIG</span>
+    <div id="vu-bars" class="vu-bars" aria-hidden="true"></div>
+    <div class="leds">
+      <span class="led" id="led-link">LINK</span>
+      <span class="led" id="led-tx">TX</span>
+      <span class="led" id="led-rx">RX</span>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button type="button" id="ptt" class="ptt" aria-label="Push to talk">
+      <span class="ptt-ring"></span>
+      <span class="ptt-face">PUSH<br />TO TALK</span>
+    </button>
+    <button type="button" id="btn-leave" class="leave hidden">&#9632; END</button>
+  </div>
+
+  <div class="unit-footer">created by ged</div>
+</main>
+
+<div id="audio-sink" style="display:none"></div>
+
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/qr.js"></script>
+<script src="js/radio.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
