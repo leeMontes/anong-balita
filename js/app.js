@@ -218,6 +218,7 @@
         onTalking: function (t) { setTalking(t.peerId, t.active); },
         onChat: addChat,
         onSelf: function (s) { state.groupName = s.groupName || state.groupName; },
+        onHostLeft: onHostLeft,
         onError: onError
       });
       net.startHost({ handle: handle, groupName: groupName, name: name, mic: state.mic });
@@ -250,6 +251,7 @@
           $("chan-group").textContent = state.groupName || "----";
           saveSession("join", handle, name, state.groupName);
         },
+        onHostLeft: onHostLeft,
         onError: onError
       });
       state.net = net;
@@ -301,6 +303,13 @@
     } else if (msg !== "network") {
       setStatus("!! " + String(msg).toUpperCase() + " !!", "err");
     }
+  }
+
+  function onHostLeft() {
+    if (!state.inChannel || state.role !== "join") return;
+    window.RadioAudio.rogerBeep();
+    setStatus("!! BASE STATION LEFT \u2014 CHANNEL CLOSED !!", "err");
+    teardown(false);
   }
 
   // ------------------------------------------------------------------- PTT

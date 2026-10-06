@@ -47,7 +47,11 @@
     this.onTalking = opts.onTalking || function () {};
     this.onSelf = opts.onSelf || function () {};
     this.onChat = opts.onChat || function () {};
+    this.onHostLeft = opts.onHostLeft || function () {};
     this.onError = opts.onError || function () {};
+
+    this.destroying = false;
+    this.hostLeftReported = false;
 
     this.peer = null;
     this.isHost = false;
@@ -236,11 +240,19 @@
       }
     });
     conn.on("close", function () {
+      self._hostGone();
       self.onStatus("disconnected");
     });
     conn.on("error", function (err) {
       self.onError(err);
     });
+  };
+
+  // The base station dropped. Only meaningful for joiners, and only once.
+  Radio.prototype._hostGone = function () {
+    if (this.isHost || this.destroying || this.hostLeftReported) return;
+    this.hostLeftReported = true;
+    this.onHostLeft();
   };
 
   Radio.prototype._callHost = function (hostId) {
@@ -253,6 +265,7 @@
       self.onStatus("online");
     });
     call.on("close", function () {
+      self._hostGone();
       self.onStatus("disconnected");
     });
   };
@@ -349,6 +362,7 @@
   };
 
   Radio.prototype.destroy = function () {
+    this.destroying = true;
     try { if (this.hostConn) this.hostConn.close(); } catch (e) {}
     try { if (this.hostCall) this.hostCall.close(); } catch (e) {}
     try { if (this.peer) this.peer.destroy(); } catch (e) {}
