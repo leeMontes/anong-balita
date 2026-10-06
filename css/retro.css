@@ -73,12 +73,6 @@ body {
   gap: 10px;
   text-decoration: none;
 }
-.brand-wave {
-  font-family: var(--mono);
-  color: var(--phosphor);
-  text-shadow: 0 0 8px var(--phosphor-dim);
-  font-size: 22px;
-}
 .brand h1 {
   font-family: var(--pixel);
   font-size: 15px;
